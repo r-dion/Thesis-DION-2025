@@ -1,56 +1,23 @@
+import utils
 import numpy as np
-
-def group_contiguous_anomalies(x, pos_label=1):
-    """Constructs anomalous ranges from the discrete labels
-
-    Parameters
-    ----------
-    x: np.array
-        An array of labels
-    pos_label : int
-        Label value for the anomalous class
-
-    Returns
-    ----------
-    anomalous_areas: list
-        A list of tuples describing the start and end points of the anomalous ranges.
-    """
-    changes_index = np.concatenate([[0], np.where(np.diff(x) != 0)[0] + 1])
-    anomalous_areas = list()
-    for k_change, t_change in enumerate(changes_index):
-        if x[t_change] == pos_label:
-            if k_change < len(changes_index) - 1:
-                anomalous_areas.append(
-                    (
-                        t_change,
-                        changes_index[k_change + 1],
-                    )
-                )
-            else:
-                anomalous_areas.append(
-                    (
-                        t_change,
-                        len(x),
-                    )
-                )
-    return anomalous_areas
 
 def sigmoid(x):
     """Standard sigmoid function."""
     return 1 / (1 + np.math.exp(-x))
 
-def scaledSigmoid(relative_position_in_window, coef=-5):
+def scaledSigmoid(relative_positions, coef=-15):
     """Score function associated to each anomalous window"""
-    if relative_position_in_window > 3.0:
-        # FP well behind window
-        val = -1.0
-    else:
-        val = 2 * sigmoid(coef * relative_position_in_window) - 1.0
+    full_score = np.zeros(len(relative_positions))
+    for i_rp, relative_position in enumerate(relative_positions):
+        if relative_position > 3.0:
+            full_score[i_rp] = -1.0
+        else:
+            full_score[i_rp] = sigmoid(coef*relative_position)
 
-    return val
+    return full_score
 
 def nab(y_true, y_pred, labels=None, pos_label=1, tp_weight=1, fp_weight=0.11, fn_weight=1, coef=-5):
-    """Constructs anomalous ranges from the discrete labels
+    """ NAB metric. See Chapter 4.2.2
 
     Parameters
     ----------
@@ -76,7 +43,7 @@ def nab(y_true, y_pred, labels=None, pos_label=1, tp_weight=1, fp_weight=0.11, f
     """
     nab_recomp = -np.ones(len(y_pred))
 
-    events_labels = group_contiguous_anomalies(y_true)
+    events_labels = utils.get_events(y_true)[pos_label]
     win_ano = 0.1*len(y_pred) / len(events_labels)
 
     events_label_ext = list()
@@ -85,9 +52,8 @@ def nab(y_true, y_pred, labels=None, pos_label=1, tp_weight=1, fp_weight=0.11, f
 
     for event in events_label_ext:
         len_ano = event[1] - event[0]
-        for i in range(event[0],len(y_pred)):
-            pos = -(event[1] - i + 1) / len_ano
-            nab_recomp[i] = scaledSigmoid(pos, coef)
+        pos = -(event[1] - np.arange(event[0],len(y_pred)) + 1) / len_ano
+        nab_recomp[event[0]:len(y_pred)] = scaledSigmoid(pos, coef)
     
     counts_tp = np.zeros(len(events_label_ext))
 
@@ -98,16 +64,15 @@ def nab(y_true, y_pred, labels=None, pos_label=1, tp_weight=1, fp_weight=0.11, f
                     counts_tp[i_e] = nab_recomp[t]
 
     counts_fp = np.zeros(len(y_pred))
-
     for i_e, event in enumerate(events_label_ext):
         if i_e == 0:
             for t in range(0, event[0]):
                 if y_pred[t]:
-                    counts_fp[t] = nab_recomp[i]
+                    counts_fp[t] = nab_recomp[t]
         else:
             for t in range(events_label_ext[i_e-1][1], event[0]):
                 if y_pred[t]:
-                    counts_fp[t] = nab_recomp[i]
+                    counts_fp[t] = nab_recomp[t]
         if i_e == len(events_label_ext) - 1:
             for t in range(event[1], len(y_pred)):
                 if y_pred[t]:
