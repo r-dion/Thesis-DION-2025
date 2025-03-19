@@ -1,3 +1,4 @@
+import utils
 import copy
 import numpy as np
 from sklearn import metrics
@@ -38,7 +39,7 @@ class MTI:
         inertia_delay="default",
         recall_measure=metrics.recall_score,
     ):
-        """ "
+        """ MTI metric. See Chapter 4.3
 
         Parameters
         ----------
@@ -90,25 +91,7 @@ class MTI:
         anomalous_areas: list
             A list of tuples describing the start and end points of the anomalous ranges.
         """
-        changes_index = np.concatenate([[0], np.where(np.diff(x) != 0)[0] + 1])
-        anomalous_areas = list()
-        for k_change, t_change in enumerate(changes_index):
-            if x[t_change] == self.pos_label:
-                if k_change < len(changes_index) - 1:
-                    anomalous_areas.append(
-                        (
-                            t_change,
-                            changes_index[k_change + 1],
-                        )
-                    )
-                else:
-                    anomalous_areas.append(
-                        (
-                            t_change,
-                            len(x),
-                        )
-                    )
-        return anomalous_areas
+        return utils.get_events(x)[self.pos_label]
 
     def _create_fuzzy_mask(self):
         """Constructs the Anticipation and Inertia mask, as a step for the Masked Specificity score.
