@@ -1,6 +1,7 @@
 import utils
 import rbo
 import nab
+import mti
 import numpy as np
 from scipy import special
 from torczon import solve
@@ -56,7 +57,7 @@ class AutoProfile():
             tmp_score = 0
             for j_e  in range(N_events):
                 tmp_len_anticip = params['anticip_areas'][j_e][1] - params['anticip_areas'][j_e][0]
-                score_func = nab.scaledSigmoid((np.arange(0, params['anticip_early_len'][j_e]) - tmp_len_anticip) / params['anticip_early_len'][j_e],
+                score_func = mti.scaled_sigmoid_mti((np.arange(0, params['anticip_early_len'][j_e]) - tmp_len_anticip) / params['anticip_early_len'][j_e],
                                             coef=var[0])
                 tmp_score += sum(score_func * self.predictions[i_pred][params['anticip_areas'][j_e][0]:
                                                                         params['anticip_areas'][j_e][0]+params['anticip_early_len'][j_e]] / sum(score_func))

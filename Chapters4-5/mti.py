@@ -5,6 +5,7 @@ from sklearn import metrics
 from scipy import special
 
 
+
 def mti(y_true, y_pred, labels=None, pos_label=1,
         anticipation_weight=1,
         recall_weight=1,
@@ -27,6 +28,17 @@ def mti(y_true, y_pred, labels=None, pos_label=1,
     mti_value = mti_metric.compute_metrics(y_true, y_pred, pos_label)
     return mti_value
 
+def scaled_sigmoid_mti(relative_positions, coef=-15):
+    """Score function associated to each anticipation / earliness area"""
+    full_score = np.zeros(len(relative_positions))
+    for i_rp, relative_position in enumerate(relative_positions):
+        if relative_position > 3.0:
+            full_score[i_rp] = -1.0
+        else:
+            full_score[i_rp] = utils.sigmoid(coef*relative_position)
+
+    return full_score
+
 class MTI:
     def __init__(
         self,
@@ -38,6 +50,7 @@ class MTI:
         earliness_period="default",
         inertia_delay="default",
         recall_measure=metrics.recall_score,
+        coef_ap=-15
     ):
         """ MTI metric. See Chapter 4.3
 
@@ -64,6 +77,8 @@ class MTI:
             Masked Specificity score. Default value is "default", which is, for each anomalous area, 5% of its length.
         recall_measure: function, default=[sklearn.]metrics.recall_score
             Recall function used for the Recall score component. Default is the traditional one, with the Sklearn implementation.
+        coef_ap : float, default=-15
+            coefficient for the sigmoid reward function in the anticipation / earliness component. 
         """
         self.anticipation_weight = anticipation_weight
         self.recall_weight = recall_weight
@@ -73,6 +88,7 @@ class MTI:
         self.early_period = earliness_period
         self.inertia_delay = inertia_delay
         self.recall_measure = recall_measure
+        self.coef_ap = coef_ap
         self.recall_score = None
         self.masked_specificity_score = None
         self.alarm_cardinality_score = None
@@ -230,11 +246,10 @@ class MTI:
             else:
                 end = min(area_bounds[0] + self.early_period, area_bounds[1])
 
-            local_predictions = pred[start:end]
-            weights = special.expit(np.linspace(6, -6, num=len(local_predictions)))
-            anticipation_score[i_area] = (
-                weights[local_predictions == self.pos_label].sum() / weights.sum()
-            )
+            local_predictions = np.array(pred[start:end])
+            recomp_func = scaled_sigmoid_mti((np.arange(0, end-start) - (area_bounds[0] - start)) / (end-start),
+                                            coef=self.coef_ap)
+            anticipation_score[i_area] = sum(local_predictions * recomp_func) / sum(recomp_func)
 
         return anticipation_score
 

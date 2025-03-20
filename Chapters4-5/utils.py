@@ -1,5 +1,9 @@
 import numpy as np
 
+def sigmoid(x):
+    """Standard sigmoid function."""
+    return 1 / (1 + np.math.exp(-x))
+
 def get_events(predictions: np.array, labels=[0, 1]) -> dict:
     """Extract start and end points of each labeled events
 

@@ -1,18 +1,14 @@
 import utils
 import numpy as np
 
-def sigmoid(x):
-    """Standard sigmoid function."""
-    return 1 / (1 + np.math.exp(-x))
-
-def scaledSigmoid(relative_positions, coef=-15):
+def scaled_sigmoid_nab(relative_positions, coef=-5):
     """Score function associated to each anomalous window"""
     full_score = np.zeros(len(relative_positions))
     for i_rp, relative_position in enumerate(relative_positions):
         if relative_position > 3.0:
             full_score[i_rp] = -1.0
         else:
-            full_score[i_rp] = sigmoid(coef*relative_position)
+            full_score[i_rp] = 2 * utils.sigmoid(coef*relative_position) - 1.0
 
     return full_score
 
@@ -53,7 +49,7 @@ def nab(y_true, y_pred, labels=None, pos_label=1, tp_weight=1, fp_weight=0.11, f
     for event in events_label_ext:
         len_ano = event[1] - event[0]
         pos = -(event[1] - np.arange(event[0],len(y_pred)) + 1) / len_ano
-        nab_recomp[event[0]:len(y_pred)] = scaledSigmoid(pos, coef)
+        nab_recomp[event[0]:len(y_pred)] = scaled_sigmoid_nab(pos, coef)
     
     counts_tp = np.zeros(len(events_label_ext))
 
@@ -96,3 +92,7 @@ def nab(y_true, y_pred, labels=None, pos_label=1, tp_weight=1, fp_weight=0.11, f
 
     scaled_nab = (raw_score - worst_possible_score) / (best_possible_score - worst_possible_score)
     return scaled_nab
+
+
+
+
