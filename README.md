@@ -23,3 +23,10 @@ Les résultats de l'évaluation du module d'auto-paramétrisation sont disponibl
 Le dossier "Chap4_other_metrics" contient les implémentations associées aux métriques de la littérature évaluées, c'est-à-dire l'Affiliation, l'eTa, le VUS et le PATE.
 
 ## Chapitre 6 & 7
+Les fichiers associés se trouvent au sein du dossier "Chapters6-7". Les fichiers les plus importants sont :
+- qboard.py : Contient le script Python de l'algorithme QBoard
+- demo_qboard : Contient une démonstration de l'utilisation du QBoard, ainsi que le détail d'évaluation des algorithmes LASSO-LARS, RandomForest, LOF et AutoEncoder.
+
+Les résultats détaillés associés aux évaluations expérimentales sont disponibles aux adresses suivantes :
+- Parangon du chapitre 6 : https://drive.google.com/file/d/1-WEemLsOmWnAjtoyamhJbCPkRtyZxBFg/view?usp=sharing
+- Parangon du chapitre 7 (Schmidl-Wenig) : https://drive.google.com/file/d/1rWLwE4auBqDRZiVnkWA4Wk4DI_pouO95/view?usp=sharing
