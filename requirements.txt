@@ -11,5 +11,6 @@ statsmodels >= 0.14.4, < 1.0
 # Chapter 5 (Autoparametrization)
 torczon == 0.0.1
 
-# Chapter 6 (QBoard)
+# Chapter 6 (Only for QBoard bench)
 pyod == 1.1.2
+polars >= 0.1.3, < 1.0.0
